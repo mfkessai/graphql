@@ -78,7 +78,16 @@ func TestDoJSONBadRequestErr(t *testing.T) {
 		w.WriteHeader(http.StatusBadRequest)
 		io.WriteString(w, `{
 			"errors": [{
-				"message": "miscellaneous message as to why the the request was bad"
+				"message": "miscellaneous message as to why the the request was bad",
+            	"extensions": {
+                	"type": "InvalidArgument"
+            	}
+			},
+			{
+				"message": "miscellaneous message as to why the the request was bad",
+            	"extensions": {
+                	"type": "InvalidArgument"
+            	}
 			}]
 		}`)
 	}))
@@ -92,7 +101,7 @@ func TestDoJSONBadRequestErr(t *testing.T) {
 	var responseData map[string]interface{}
 	err := client.Run(ctx, &Request{q: "query {}"}, &responseData)
 	is.Equal(calls, 1) // calls
-	is.Equal(err.Error(), "graphql: miscellaneous message as to why the the request was bad")
+	is.Equal(err.Error(), "graphql: miscellaneous message as to why the the request was bad\n[Extensions]type:InvalidArgument\nmiscellaneous message as to why the the request was bad\n[Extensions]type:InvalidArgument")
 }
 
 func TestQueryJSON(t *testing.T) {
