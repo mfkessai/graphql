@@ -38,6 +38,7 @@ import (
 	"io"
 	"mime/multipart"
 	"net/http"
+	"strings"
 
 	"github.com/pkg/errors"
 )
@@ -79,7 +80,7 @@ func (c *Client) logf(format string, args ...interface{}) {
 // Run executes the query and unmarshals the response from the data field
 // into the response object.
 // Pass in a nil response object to skip response parsing.
-// If the request fails or the server returns an error, the first error
+// If the request fails or the server returns an error, the error
 // will be returned.
 func (c *Client) Run(ctx context.Context, req *Request, resp interface{}) error {
 	select {
@@ -144,8 +145,7 @@ func (c *Client) runWithJSON(ctx context.Context, req *Request, resp interface{}
 		return errors.Wrap(err, "decoding response")
 	}
 	if len(gr.Errors) > 0 {
-		// return first error
-		return gr.Errors[0]
+		return gr.Errors
 	}
 	return nil
 }
@@ -215,8 +215,7 @@ func (c *Client) runWithPostFields(ctx context.Context, req *Request, resp inter
 		return errors.Wrap(err, "decoding response")
 	}
 	if len(gr.Errors) > 0 {
-		// return first error
-		return gr.Errors[0]
+		return gr.Errors
 	}
 	return nil
 }
@@ -254,13 +253,25 @@ type graphErr struct {
 	Extensions map[string]interface{}
 }
 
-func (e graphErr) Error() string {
-	return "graphql: " + e.Message
+type graphErrList []graphErr
+
+func (e graphErrList) Error() string {
+	listMessage := make([]string, 0, len(e))
+	for _, v := range e {
+		message := v.Message
+		if len(v.Extensions) > 0 {
+			for k, v := range v.Extensions {
+				message += fmt.Sprintf("\n[Extensions]%v:%v", k, v)
+			}
+		}
+		listMessage = append(listMessage, message)
+	}
+	return "graphql: " + strings.Join(listMessage, "\n")
 }
 
 type graphResponse struct {
 	Data   interface{}
-	Errors []graphErr
+	Errors graphErrList
 }
 
 // Request is a GraphQL request.
