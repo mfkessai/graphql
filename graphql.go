@@ -248,14 +248,14 @@ func ImmediatelyCloseReqBody() ClientOption {
 // modify the behaviour of the Client.
 type ClientOption func(*Client)
 
-type graphErr struct {
+type GraphErr struct {
 	Message    string
 	Extensions map[string]interface{}
 }
 
-type graphErrList []graphErr
+type GraphErrList []GraphErr
 
-func (e graphErrList) Error() string {
+func (e GraphErrList) Error() string {
 	listMessage := make([]string, 0, len(e))
 	for _, v := range e {
 		message := v.Message
@@ -271,7 +271,7 @@ func (e graphErrList) Error() string {
 
 type graphResponse struct {
 	Data   interface{}
-	Errors graphErrList
+	Errors GraphErrList
 }
 
 // Request is a GraphQL request.
